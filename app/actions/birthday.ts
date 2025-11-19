@@ -37,3 +37,21 @@ export async function addBirthday(prevState: any, formData: FormData) {
         return { message: "Database Error" }
     }
 }
+
+export async function deleteBirthday(id: string) {
+    const session = await auth()
+    if (!session?.user?.id) return { message: "Unauthorized" }
+
+    try {
+        await prisma.birthday.delete({
+            where: {
+                id,
+                userId: session.user.id, // Ensure user owns the birthday
+            },
+        })
+        revalidatePath('/dashboard')
+        return { message: "Success" }
+    } catch (e) {
+        return { message: "Database Error" }
+    }
+}

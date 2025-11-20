@@ -3,9 +3,12 @@ import { prisma } from "@/lib/prisma"
 import nodemailer from "nodemailer"
 
 export async function GET(request: Request) {
-    const authHeader = request.headers.get('authorization')
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-        return new NextResponse('Unauthorized', { status: 401 })
+    // Get secret from query parameter
+    const { searchParams } = new URL(request.url)
+    const secret = searchParams.get('secret')
+
+    if (secret !== process.env.CRON_SECRET) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const today = new Date()
@@ -62,7 +65,11 @@ export async function GET(request: Request) {
 
         await Promise.all(emailPromises)
 
-        return NextResponse.json({ message: `Processed ${todaysBirthdays.length} birthdays` })
+        return NextResponse.json({
+            message: `Processed ${todaysBirthdays.length} birthdays`,
+            sent: todaysBirthdays.length,
+            birthdays: todaysBirthdays.map(b => b.name)
+        })
 
     } catch (error) {
         console.error("Reminder Error:", error)

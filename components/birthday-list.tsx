@@ -36,6 +36,19 @@ export function BirthdayList({ birthdays }: { birthdays: Birthday[] }) {
         setDeletingId(null)
     }
 
+    const getCountdownText = (days: number) => {
+        if (days === 0) return "Today! 🎂"
+        if (days === 1) return "Tomorrow! 🎁"
+        return `In ${days} days`
+    }
+
+    const getUrgencyColor = (days: number) => {
+        if (days === 0) return "bg-gradient-to-br from-secondary to-primary text-primary-foreground"
+        if (days === 1) return "bg-gradient-to-br from-primary to-accent text-primary-foreground"
+        if (days <= 7) return "bg-card text-card-foreground border-l-4 border-l-accent"
+        return "bg-card text-card-foreground"
+    }
+
     if (birthdays.length === 0) {
         return (
             <motion.div
@@ -59,7 +72,7 @@ export function BirthdayList({ birthdays }: { birthdays: Birthday[] }) {
             <AnimatePresence mode="popLayout">
                 {sortedBirthdays.map((birthday, index) => {
                     const days = getDaysUntil(birthday.date)
-                    const isToday = days === 0
+                    const isUrgent = days <= 1
 
                     return (
                         <motion.div
@@ -70,43 +83,41 @@ export function BirthdayList({ birthdays }: { birthdays: Birthday[] }) {
                             exit={{ opacity: 0, scale: 0.9 }}
                             transition={{ duration: 0.2, delay: index * 0.05 }}
                         >
-                            <Card className={`relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group ${isToday
-                                    ? 'bg-gradient-to-br from-pink-500 to-rose-600 text-white'
-                                    : 'bg-white dark:bg-gray-900 hover:-translate-y-1'
-                                }`}>
-                                {/* Decorative background elements */}
-                                <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full blur-2xl transform rotate-12"></div>
+                            <Card className={`relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group ${getUrgencyColor(days)}`}>
+                                {/* Decorative background elements for urgent cards */}
+                                {isUrgent && (
+                                    <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full blur-2xl transform rotate-12"></div>
+                                )}
 
                                 <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2 relative z-10">
                                     <div className="space-y-1">
-                                        <CardTitle className={`text-xl font-bold ${isToday ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
+                                        <CardTitle className={`text-xl font-bold ${isUrgent ? 'text-primary-foreground' : 'text-card-foreground'}`}>
                                             {birthday.name}
                                         </CardTitle>
-                                        <p className={`text-sm font-medium ${isToday ? 'text-pink-100' : 'text-muted-foreground'}`}>
+                                        <p className={`text-sm font-medium ${isUrgent ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
                                             {format(birthday.date, "MMMM do")}
                                         </p>
                                     </div>
-                                    <div className={`flex flex-col items-end ${isToday ? 'text-white' : ''}`}>
-                                        <span className="text-3xl font-black tracking-tighter">
-                                            {isToday ? "TODAY" : days}
+                                    <div className={`flex flex-col items-end ${isUrgent ? 'text-primary-foreground' : ''}`}>
+                                        <span className="text-lg font-black tracking-tight">
+                                            {getCountdownText(days)}
                                         </span>
-                                        {!isToday && <span className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Days Left</span>}
                                     </div>
                                 </CardHeader>
 
                                 <CardContent className="relative z-10 pt-4">
                                     <div className="flex items-center justify-between">
-                                        <div className={`text-xs font-medium px-2 py-1 rounded-full ${isToday ? 'bg-white/20 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
+                                        <div className={`text-xs font-medium px-2 py-1 rounded-full ${isUrgent ? 'bg-white/20 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
                                             }`}>
-                                            {new Date().getFullYear() - new Date(birthday.date).getFullYear()} years old
+                                            Turning {new Date().getFullYear() - new Date(birthday.date).getFullYear() + (days === 0 ? 0 : 1)}
                                         </div>
 
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className={`h-8 w-8 transition-opacity ${isToday
-                                                    ? 'text-white/70 hover:text-white hover:bg-white/20'
-                                                    : 'text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30'
+                                            className={`h-8 w-8 transition-opacity ${isUrgent
+                                                ? 'text-white/70 hover:text-white hover:bg-white/20'
+                                                : 'text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30'
                                                 }`}
                                             onClick={() => handleDelete(birthday.id)}
                                             disabled={deletingId === birthday.id}
